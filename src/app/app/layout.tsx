@@ -1,0 +1,31 @@
+import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
+
+import { AuthenticatedShell } from "@/components/shell/authenticated-shell";
+import { authOptions } from "@/lib/auth/auth-options";
+import { getActiveHome } from "@/lib/homes/get-active-home";
+import { getStubHomes } from "@/lib/homes/stub-homes";
+import { ROUTES } from "@/lib/routes";
+
+export default async function AppSectionLayout({ children }: { children: React.ReactNode }) {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    redirect(ROUTES.login);
+  }
+
+  const homes = getStubHomes();
+  const activeHome = getActiveHome(homes);
+
+  const backendUser = session.backendUser;
+  const user = {
+    name: backendUser?.name ?? session.user?.name ?? "Usuario",
+    email: backendUser?.email ?? session.user?.email,
+    imageUrl: backendUser?.imageUrl ?? session.user?.image ?? null,
+  };
+
+  return (
+    <AuthenticatedShell user={user} activeHome={activeHome}>
+      {children}
+    </AuthenticatedShell>
+  );
+}
