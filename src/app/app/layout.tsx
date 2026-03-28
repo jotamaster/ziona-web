@@ -17,6 +17,7 @@ export default async function AppSectionLayout({ children }: { children: React.R
 
   const backendUser = session.backendUser;
   const user = {
+    publicCode: backendUser?.publicCode ?? null,
     name: backendUser?.name ?? session.user?.name ?? "Usuario",
     email: backendUser?.email ?? session.user?.email,
     imageUrl: backendUser?.imageUrl ?? session.user?.image ?? null,

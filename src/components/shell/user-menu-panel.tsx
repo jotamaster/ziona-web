@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 
+import { UserMenuCopyPublicCode } from "@/components/shell/user-menu-copy-public-code";
 import { UserMenuHeader } from "@/components/shell/user-menu-header";
 import { UserMenuNav } from "@/components/shell/user-menu-nav";
 import type { ShellUser } from "@/components/shell/types";
@@ -62,7 +63,8 @@ export function UserMenuPanel({ open, onClose, panelId, user }: UserMenuPanelPro
         tabIndex={-1}
         className="neu-raised fixed right-0 top-0 z-[60] flex h-full w-[min(100%,20rem)] flex-col gap-0 overflow-y-auto rounded-l-[var(--neu-radius-lg)] p-5 shadow-[var(--neu-shadow-light),var(--neu-shadow-dark)]"
       >
-        <UserMenuHeader name={user.name} email={user.email} imageUrl={user.imageUrl} />
+        <UserMenuHeader name={user.name} email={user.email} imageUrl={user.imageUrl} onClose={onClose} />
+        <UserMenuCopyPublicCode publicCode={user.publicCode} />
         <UserMenuNav onNavigate={onClose} />
       </div>
     </>
