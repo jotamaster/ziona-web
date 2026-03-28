@@ -4,3 +4,7 @@ export const ROUTES = {
   homes: "/app/homes",
   invitations: "/app/invitations",
 } as const;
+
+export function routeHomeAdmin(homeId: string): string {
+  return `/app/homes/${encodeURIComponent(homeId)}`;
+}
