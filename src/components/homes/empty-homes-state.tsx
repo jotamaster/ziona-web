@@ -1,4 +1,4 @@
-import { CreateFirstHomeButton } from "@/components/homes/create-first-home-button";
+import { CreateHomeButton } from "@/components/homes/create-home-button";
 import { NeuSurface } from "@/components/ui/neu-surface";
 
 type EmptyHomesStateProps = {
@@ -19,7 +19,7 @@ export function EmptyHomesState({ className = "" }: EmptyHomesStateProps) {
           Crea tu primer hogar para organizar tu espacio y empezar a invitar a quien quieras.
         </p>
       </div>
-      <CreateFirstHomeButton />
+      <CreateHomeButton variant="primary" label="Crear tu primer hogar" />
     </NeuSurface>
   );
 }

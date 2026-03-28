@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { AuthenticatedShell } from "@/components/shell/authenticated-shell";
 import { authOptions } from "@/lib/auth/auth-options";
 import { getActiveHome } from "@/lib/homes/get-active-home";
-import { getStubHomes } from "@/lib/homes/stub-homes";
+import { getHomes } from "@/lib/homes/get-homes";
 import { ROUTES } from "@/lib/routes";
 
 export default async function AppSectionLayout({ children }: { children: React.ReactNode }) {
@@ -13,7 +13,7 @@ export default async function AppSectionLayout({ children }: { children: React.R
     redirect(ROUTES.login);
   }
 
-  const homes = getStubHomes();
+  const homes = await getHomes();
   const activeHome = getActiveHome(homes);
 
   const backendUser = session.backendUser;

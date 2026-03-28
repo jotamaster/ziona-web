@@ -1,9 +1,9 @@
 import { EmptyHomesState } from "@/components/homes/empty-homes-state";
 import { NeuSurface } from "@/components/ui/neu-surface";
-import { getStubHomes } from "@/lib/homes/stub-homes";
+import { getHomes } from "@/lib/homes/get-homes";
 
 export default async function AppHomePage() {
-  const homes = getStubHomes();
+  const homes = await getHomes();
 
   if (homes.length === 0) {
     return (
