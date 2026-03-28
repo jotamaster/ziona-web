@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 
+import { ThemeSelect } from "@/components/theme/theme-select";
 import { ROUTES } from "@/lib/routes";
 
 type UserMenuNavProps = {
@@ -23,6 +24,7 @@ export function UserMenuNav({ onNavigate }: UserMenuNavProps) {
       <Link href={ROUTES.invitations} className={rowClass} onClick={close}>
         Invitaciones
       </Link>
+      <ThemeSelect />
       <button
         type="button"
         className={`${rowClass} mt-1 border-t border-[color-mix(in_srgb,var(--neu-text)_8%,transparent)] pt-3 text-[var(--neu-accent)]`}
