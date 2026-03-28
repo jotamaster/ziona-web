@@ -131,3 +131,41 @@ export async function deleteBackendHome(apiAccessToken: string, homeId: string):
     throw new Error(`Backend DELETE /homes failed with ${response.status}. ${body || "No body."}`);
   }
 }
+
+const taskDtoSchema = z
+  .object({
+    id: z.string(),
+    homeId: z.string(),
+    title: z.string(),
+    computedStatus: z.enum(["completed", "expired", "pending"]),
+  })
+  .passthrough();
+
+export type BackendTaskDto = z.infer<typeof taskDtoSchema>;
+
+export async function getBackendTasks(apiAccessToken: string, homeId: string): Promise<BackendTaskDto[]> {
+  const response = await fetchBackend(`/homes/${encodeURIComponent(homeId)}/tasks`, {
+    method: "GET",
+    apiAccessToken,
+  });
+
+  if (response.status === 401 || response.status === 403) {
+    const err = new Error(`Backend GET /homes/${homeId}/tasks unauthorized (${response.status}).`);
+    (err as Error & { status: number }).status = response.status;
+    throw err;
+  }
+
+  if (response.status === 404) {
+    const err = new Error("Hogar no encontrado.");
+    (err as Error & { status: number }).status = 404;
+    throw err;
+  }
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => "");
+    throw new Error(`Backend GET /homes/${homeId}/tasks failed with ${response.status}. ${body || "No body."}`);
+  }
+
+  const raw = await response.json();
+  return z.array(taskDtoSchema).parse(raw);
+}

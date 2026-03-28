@@ -1,5 +1,5 @@
+import { AppHomeDashboard } from "@/components/app/app-home-dashboard";
 import { EmptyHomesState } from "@/components/homes/empty-homes-state";
-import { NeuSurface } from "@/components/ui/neu-surface";
 import { getHomes } from "@/lib/homes/get-homes";
 
 export default async function AppHomePage() {
@@ -13,12 +13,5 @@ export default async function AppHomePage() {
     );
   }
 
-  return (
-    <NeuSurface variant="raised" className="p-6 sm:p-8">
-      <h1 className="text-xl font-semibold text-[var(--neu-text)]">Inicio</h1>
-      <p className="mt-2 text-pretty text-sm text-[var(--neu-text-muted)]">
-        Tu espacio principal en Ziona.
-      </p>
-    </NeuSurface>
-  );
+  return <AppHomeDashboard />;
 }
