@@ -18,6 +18,10 @@ function mapToHome(dto: { id: string; name: string; createdByUserId?: string }):
 /**
  * Hogares del usuario autenticado (GET /homes).
  * Cacheada por request de React para compartir resultado entre layout y páginas.
+ *
+ * Contrato con backend (Nest `HomesService.findAllForUser`): la lista viene ordenada por
+ * `createdAt` descendente — el índice 0 es el hogar **más reciente**. El front interpreta
+ * ese primer elemento como “hogar activo” para UI (`getActiveHome`).
  */
 export const getHomes = cache(async (): Promise<Home[]> => {
   const apiAccessToken = await getApiAccessTokenFromCookies();

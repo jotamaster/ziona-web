@@ -1,9 +1,9 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
+import { SelectedHomeProvider } from "@/components/homes/selected-home-context";
 import { AuthenticatedShell } from "@/components/shell/authenticated-shell";
 import { authOptions } from "@/lib/auth/auth-options";
-import { getActiveHome } from "@/lib/homes/get-active-home";
 import { getHomes } from "@/lib/homes/get-homes";
 import { ROUTES } from "@/lib/routes";
 
@@ -14,7 +14,6 @@ export default async function AppSectionLayout({ children }: { children: React.R
   }
 
   const homes = await getHomes();
-  const activeHome = getActiveHome(homes);
 
   const backendUser = session.backendUser;
   const user = {
@@ -24,8 +23,8 @@ export default async function AppSectionLayout({ children }: { children: React.R
   };
 
   return (
-    <AuthenticatedShell user={user} activeHome={activeHome}>
-      {children}
-    </AuthenticatedShell>
+    <SelectedHomeProvider homes={homes}>
+      <AuthenticatedShell user={user}>{children}</AuthenticatedShell>
+    </SelectedHomeProvider>
   );
 }
