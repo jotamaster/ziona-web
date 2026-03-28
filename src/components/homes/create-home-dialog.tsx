@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import { createHomeAction, type CreateHomeState } from "@/lib/homes/actions";
+import { writeSelectedHomeIdToStorage } from "@/lib/homes/resolve-selected-home";
 
 type CreateHomeDialogProps = {
   open: boolean;
@@ -47,6 +48,7 @@ export function CreateHomeDialog({ open, onOpenChange }: CreateHomeDialogProps) 
     startTransition(async () => {
       const result: CreateHomeState = await createHomeAction(name);
       if (result.ok) {
+        writeSelectedHomeIdToStorage(result.homeId);
         close();
         router.refresh();
         return;

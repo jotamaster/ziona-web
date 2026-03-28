@@ -8,9 +8,10 @@ import { DeleteHomeDialog } from "./delete-home-dialog";
 
 type HomeDeleteButtonProps = {
   home: Home;
+  isActive: boolean;
 };
 
-export function HomeDeleteButton({ home }: HomeDeleteButtonProps) {
+export function HomeDeleteButton({ home, isActive }: HomeDeleteButtonProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -24,7 +25,7 @@ export function HomeDeleteButton({ home }: HomeDeleteButtonProps) {
       >
         Eliminar
       </button>
-      <DeleteHomeDialog home={home} open={open} onOpenChange={setOpen} />
+      <DeleteHomeDialog home={home} isActive={isActive} open={open} onOpenChange={setOpen} />
     </>
   );
 }

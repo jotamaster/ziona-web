@@ -14,7 +14,7 @@ const homeNameSchema = z
   .min(1, "El nombre es obligatorio.")
   .max(80, "Máximo 80 caracteres.");
 
-export type CreateHomeState = { ok: true } | { ok: false; message: string };
+export type CreateHomeState = { ok: true; homeId: string } | { ok: false; message: string };
 export type DeleteHomeState = { ok: true } | { ok: false; message: string };
 
 export async function createHomeAction(name: string): Promise<CreateHomeState> {
@@ -30,7 +30,10 @@ export async function createHomeAction(name: string): Promise<CreateHomeState> {
   }
 
   try {
-    await createBackendHome(apiAccessToken, parsed.data);
+    const created = await createBackendHome(apiAccessToken, parsed.data);
+    revalidatePath(ROUTES.app);
+    revalidatePath(ROUTES.homes);
+    return { ok: true, homeId: created.id };
   } catch (e) {
     const status = e && typeof e === "object" && "status" in e ? (e as { status: number }).status : undefined;
     if (status === 401 || status === 403) {
@@ -39,10 +42,6 @@ export async function createHomeAction(name: string): Promise<CreateHomeState> {
     const message = e instanceof Error ? e.message : "No se pudo crear el hogar.";
     return { ok: false, message };
   }
-
-  revalidatePath(ROUTES.app);
-  revalidatePath(ROUTES.homes);
-  return { ok: true };
 }
 
 export async function deleteHomeAction(homeId: string): Promise<DeleteHomeState> {

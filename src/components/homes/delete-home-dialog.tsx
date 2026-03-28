@@ -10,9 +10,11 @@ type DeleteHomeDialogProps = {
   home: Home;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** Si es el hogar mostrado como activo en la lista (primer ítem), se muestra aviso extra. */
+  isActive?: boolean;
 };
 
-export function DeleteHomeDialog({ home, open, onOpenChange }: DeleteHomeDialogProps) {
+export function DeleteHomeDialog({ home, open, onOpenChange, isActive = false }: DeleteHomeDialogProps) {
   const router = useRouter();
   const titleId = useId();
   const descId = useId();
@@ -76,6 +78,12 @@ export function DeleteHomeDialog({ home, open, onOpenChange }: DeleteHomeDialogP
           Se eliminará <span className="font-medium text-[var(--neu-text)]">{home.name}</span>. Esta acción no se
           puede deshacer.
         </p>
+        {isActive ? (
+          <p className="mt-3 text-pretty text-sm text-[var(--neu-text-muted)]">
+            Es el hogar que aparece como activo en la barra superior. El siguiente hogar de la lista pasará a
+            mostrarse como activo.
+          </p>
+        ) : null}
         {error ? (
           <p className="mt-3 text-sm text-[var(--neu-text-muted)]" role="alert">
             {error}

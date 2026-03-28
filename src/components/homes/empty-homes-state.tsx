@@ -16,7 +16,8 @@ export function EmptyHomesState({ className = "" }: EmptyHomesStateProps) {
           Aún no tienes hogares
         </h2>
         <p className="text-pretty text-sm leading-relaxed text-[var(--neu-text-muted)]">
-          Crea tu primer hogar para organizar tu espacio y empezar a invitar a quien quieras.
+          Crea tu primer hogar para organizar tu espacio y empezar a invitar a quien quieras. El hogar más reciente
+          se muestra como activo en la barra superior.
         </p>
       </div>
       <CreateHomeButton variant="primary" label="Crear tu primer hogar" />
