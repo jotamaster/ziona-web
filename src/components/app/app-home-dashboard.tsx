@@ -2,42 +2,44 @@
 
 import Link from "next/link";
 
+import { HomeMembersStrip } from "@/components/app/home-members-strip";
+import { HomeTaskStatsRow } from "@/components/app/home-task-stats-row";
+import { useHomeDashboardData } from "@/components/app/use-home-dashboard-data";
 import { useSelectedHome } from "@/components/homes/selected-home-context";
 import { HomeTasksSection } from "@/components/tasks/home-tasks-section";
 import { NeuSurface } from "@/components/ui/neu-surface";
 import { ROUTES } from "@/lib/routes";
 
 export function AppHomeDashboard() {
-  const { homes, selectedHome, hydrated } = useSelectedHome();
-  const multiple = homes.length > 1;
+  const { selectedHome, selectedHomeId } = useSelectedHome();
+  const dash = useHomeDashboardData(selectedHomeId);
 
   return (
     <div className="flex flex-col gap-8">
-      <header className="space-y-2">
-        <h1 className="text-xl font-semibold tracking-tight text-[var(--neu-text)]">Inicio</h1>
-        <p className="text-pretty text-sm text-[var(--neu-text-muted)]">
-          {selectedHome ? (
-            <>
-              <span className="font-medium text-[var(--neu-text)]">{selectedHome.name}</span>.
-              {multiple ? (
-                <>
-                  {" "}
-                  Puedes cambiar de hogar con la flecha junto al nombre en la barra superior. El hogar activo es el
-                  que usamos para las tareas de abajo.
-                </>
-              ) : (
-                <> Este es tu hogar activo; puedes gestionar más hogares desde la sección Hogares.</>
-              )}
-            </>
-          ) : hydrated ? (
-            "Sin hogar seleccionado."
-          ) : (
-            "…"
-          )}
-        </p>
-      </header>
 
-      <HomeTasksSection />
+      {selectedHome && selectedHomeId ? (
+        <div className="flex flex-col gap-5">
+          <HomeMembersStrip
+            members={dash.members}
+            loading={dash.membersLoading}
+            error={dash.membersError}
+          />
+          <HomeTaskStatsRow
+            tasks={dash.tasks}
+            loading={dash.tasksLoading}
+            error={dash.tasksError}
+          />
+          <HomeTasksSection
+            homeId={selectedHomeId}
+            homeName={selectedHome.name}
+            tasks={dash.tasks}
+            loading={dash.tasksLoading}
+            error={dash.tasksError}
+            members={dash.members}
+            onTasksMutated={dash.refetch}
+          />
+        </div>
+      ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Link

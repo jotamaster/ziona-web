@@ -4,7 +4,12 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
-import { createBackendHome, deleteBackendHome } from "@/lib/api/backend-client";
+import {
+  createBackendHome,
+  deleteBackendHome,
+  getBackendHomeMembers,
+  type BackendHomeMemberDto,
+} from "@/lib/api/backend-client";
 import { getApiAccessTokenFromCookies } from "@/lib/auth/get-api-access-token";
 import { ROUTES } from "@/lib/routes";
 
@@ -16,6 +21,39 @@ const homeNameSchema = z
 
 export type CreateHomeState = { ok: true; homeId: string } | { ok: false; message: string };
 export type DeleteHomeState = { ok: true } | { ok: false; message: string };
+export type ListHomeMembersState =
+  | { ok: true; members: BackendHomeMemberDto[] }
+  | { ok: false; message: string };
+
+export async function listHomeMembersAction(homeId: string): Promise<ListHomeMembersState> {
+  const apiAccessToken = await getApiAccessTokenFromCookies();
+  if (!apiAccessToken) {
+    redirect(ROUTES.login);
+  }
+
+  const id = homeId?.trim();
+  if (!id) {
+    return { ok: false, message: "Hogar inválido." };
+  }
+
+  try {
+    const members = await getBackendHomeMembers(apiAccessToken, id);
+    return { ok: true, members };
+  } catch (e) {
+    const status = e && typeof e === "object" && "status" in e ? (e as { status: number }).status : undefined;
+    if (status === 401) {
+      redirect(ROUTES.login);
+    }
+    if (status === 403) {
+      return { ok: false, message: "No tienes acceso a los miembros de este hogar." };
+    }
+    if (status === 404) {
+      return { ok: false, message: "Este hogar no existe." };
+    }
+    const message = e instanceof Error ? e.message : "No se pudieron cargar los miembros.";
+    return { ok: false, message };
+  }
+}
 
 export async function createHomeAction(name: string): Promise<CreateHomeState> {
   const parsed = homeNameSchema.safeParse(name);

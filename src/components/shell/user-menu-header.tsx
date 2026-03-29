@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 type UserMenuHeaderProps = {
   name: string;
   email?: string | null;
@@ -8,12 +10,26 @@ type UserMenuHeaderProps = {
 };
 
 export function UserMenuHeader({ name, email, imageUrl, onClose }: UserMenuHeaderProps) {
+  const [imageFailed, setImageFailed] = useState(false);
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [imageUrl]);
+
+  const showPhoto = Boolean(imageUrl) && !imageFailed;
+
   return (
     <div className="flex items-start gap-3 border-b border-[color-mix(in_srgb,var(--neu-text)_8%,transparent)] pb-4">
       <div className="neu-inset flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full">
-        {imageUrl ? (
+        {showPhoto ? (
           // eslint-disable-next-line @next/next/no-img-element -- URL externa de proveedor OAuth
-          <img src={imageUrl} alt="" className="h-full w-full object-cover" />
+          <img
+            src={imageUrl!}
+            alt=""
+            className="h-full w-full object-cover"
+            referrerPolicy="no-referrer"
+            onError={() => setImageFailed(true)}
+          />
         ) : (
           <span className="text-lg font-semibold text-[var(--neu-accent)]" aria-hidden>
             {name.charAt(0).toUpperCase()}

@@ -52,6 +52,8 @@
   --color-neu-accent: var(--neu-accent);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --text-xxs: 0.6rem;
+  --text-xxs--line-height: 0.875rem;
 }
 
 body {

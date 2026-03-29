@@ -143,33 +143,107 @@ export async function deleteBackendHome(apiAccessToken: string, homeId: string):
   }
 }
 
-const taskDtoSchema = z
-  .object({
-    id: z.string(),
-    homeId: z.string(),
-    title: z.string(),
-    computedStatus: z.enum(["completed", "expired", "pending"]),
-  })
-  .passthrough();
+const minimalUserSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  publicCode: z.string(),
+});
 
-export type BackendTaskDto = z.infer<typeof taskDtoSchema>;
+const taskAssigneeRowSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  assignedAt: z.string(),
+  user: minimalUserSchema,
+});
+
+export const backendTaskDtoSchema = z.object({
+  id: z.string(),
+  homeId: z.string(),
+  title: z.string(),
+  description: z.string().nullable(),
+  priority: z.enum(["low", "medium", "high"]),
+  dueDate: z.string().nullable(),
+  status: z.enum(["pending", "completed"]),
+  computedStatus: z.enum(["completed", "expired", "pending"]),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  completedAt: z.string().nullable(),
+  createdByUser: minimalUserSchema,
+  updatedByUser: minimalUserSchema,
+  completedByUser: minimalUserSchema.nullable(),
+  assignees: z.array(taskAssigneeRowSchema),
+});
+
+export type BackendTaskDto = z.infer<typeof backendTaskDtoSchema>;
+export type BackendMinimalUserDto = z.infer<typeof minimalUserSchema>;
+
+export const taskEventTypeSchema = z.enum([
+  "task_created",
+  "task_updated",
+  "task_assigned",
+  "task_unassigned",
+  "task_completed",
+  "task_reopened",
+  "task_deleted",
+]);
+
+export const backendTaskEventDtoSchema = z.object({
+  id: z.string(),
+  type: taskEventTypeSchema,
+  payload: z.unknown().nullable(),
+  createdAt: z.string(),
+  actor: minimalUserSchema,
+});
+
+export type BackendTaskEventDto = z.infer<typeof backendTaskEventDtoSchema>;
+
+export type CreateBackendTaskBody = {
+  title: string;
+  description?: string;
+  priority?: "low" | "medium" | "high";
+  dueDate?: string;
+  assigneeUserIds?: string[];
+};
+
+export type PatchBackendTaskBody = {
+  title?: string;
+  description?: string | null;
+  priority?: "low" | "medium" | "high";
+  dueDate?: string | null;
+};
+
+function taskPath(homeId: string, taskId?: string, suffix?: string): string {
+  const base = `/homes/${encodeURIComponent(homeId)}/tasks`;
+  if (!taskId) return base;
+  const t = `${base}/${encodeURIComponent(taskId)}`;
+  return suffix ? `${t}/${suffix}` : t;
+}
+
+async function parseTaskJson(response: Response): Promise<BackendTaskDto> {
+  const raw = await response.json();
+  return backendTaskDtoSchema.parse(raw);
+}
+
+function attachHttpStatus(err: Error, status: number): Error {
+  (err as Error & { status: number }).status = status;
+  return err;
+}
 
 export async function getBackendTasks(apiAccessToken: string, homeId: string): Promise<BackendTaskDto[]> {
-  const response = await fetchBackend(`/homes/${encodeURIComponent(homeId)}/tasks`, {
+  const response = await fetchBackend(taskPath(homeId), {
     method: "GET",
     apiAccessToken,
   });
 
   if (response.status === 401 || response.status === 403) {
-    const err = new Error(`Backend GET /homes/${homeId}/tasks unauthorized (${response.status}).`);
-    (err as Error & { status: number }).status = response.status;
-    throw err;
+    throw attachHttpStatus(
+      new Error(`Backend GET /homes/${homeId}/tasks unauthorized (${response.status}).`),
+      response.status,
+    );
   }
 
   if (response.status === 404) {
-    const err = new Error("Hogar no encontrado.");
-    (err as Error & { status: number }).status = 404;
-    throw err;
+    throw attachHttpStatus(new Error("Hogar no encontrado."), 404);
   }
 
   if (!response.ok) {
@@ -178,13 +252,282 @@ export async function getBackendTasks(apiAccessToken: string, homeId: string): P
   }
 
   const raw = await response.json();
-  return z.array(taskDtoSchema).parse(raw);
+  return z.array(backendTaskDtoSchema).parse(raw);
+}
+
+export async function getBackendTask(
+  apiAccessToken: string,
+  homeId: string,
+  taskId: string,
+): Promise<BackendTaskDto> {
+  const response = await fetchBackend(taskPath(homeId, taskId), {
+    method: "GET",
+    apiAccessToken,
+  });
+
+  if (response.status === 401 || response.status === 403) {
+    throw attachHttpStatus(
+      new Error(`Backend GET task unauthorized (${response.status}).`),
+      response.status,
+    );
+  }
+
+  if (response.status === 404) {
+    throw attachHttpStatus(new Error("Tarea no encontrada."), 404);
+  }
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => "");
+    throw new Error(`Backend GET task failed with ${response.status}. ${body || "No body."}`);
+  }
+
+  return parseTaskJson(response);
+}
+
+export async function createBackendTask(
+  apiAccessToken: string,
+  homeId: string,
+  body: CreateBackendTaskBody,
+): Promise<BackendTaskDto> {
+  const response = await fetchBackend(taskPath(homeId), {
+    method: "POST",
+    apiAccessToken,
+    body: JSON.stringify(body),
+  });
+
+  if (response.status === 401 || response.status === 403) {
+    throw attachHttpStatus(new Error(`Backend POST task unauthorized (${response.status}).`), response.status);
+  }
+
+  if (response.status === 404) {
+    throw attachHttpStatus(new Error("Hogar no encontrado."), 404);
+  }
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    const msg = messageFromNestErrorBody(text, `Error al crear tarea (${response.status}).`);
+    const err = new Error(msg);
+    throw attachHttpStatus(err, response.status);
+  }
+
+  const raw = await response.json();
+  return backendTaskDtoSchema.parse(raw);
+}
+
+export async function patchBackendTask(
+  apiAccessToken: string,
+  homeId: string,
+  taskId: string,
+  body: PatchBackendTaskBody,
+): Promise<BackendTaskDto> {
+  const response = await fetchBackend(taskPath(homeId, taskId), {
+    method: "PATCH",
+    apiAccessToken,
+    body: JSON.stringify(body),
+  });
+
+  if (response.status === 401 || response.status === 403) {
+    throw attachHttpStatus(new Error(`Backend PATCH task unauthorized (${response.status}).`), response.status);
+  }
+
+  if (response.status === 404) {
+    throw attachHttpStatus(new Error("Tarea no encontrada."), 404);
+  }
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    const msg = messageFromNestErrorBody(text, `Error al actualizar tarea (${response.status}).`);
+    const err = new Error(msg);
+    throw attachHttpStatus(err, response.status);
+  }
+
+  const raw = await response.json();
+  return backendTaskDtoSchema.parse(raw);
+}
+
+export async function deleteBackendTask(apiAccessToken: string, homeId: string, taskId: string): Promise<void> {
+  const response = await fetchBackend(taskPath(homeId, taskId), {
+    method: "DELETE",
+    apiAccessToken,
+  });
+
+  if (response.status === 401 || response.status === 403) {
+    throw attachHttpStatus(new Error(`Backend DELETE task unauthorized (${response.status}).`), response.status);
+  }
+
+  if (response.status === 404) {
+    throw attachHttpStatus(new Error("Tarea no encontrada."), 404);
+  }
+
+  if (response.status !== 204 && !response.ok) {
+    const body = await response.text().catch(() => "");
+    throw new Error(`Backend DELETE task failed with ${response.status}. ${body || "No body."}`);
+  }
+}
+
+export async function completeBackendTask(
+  apiAccessToken: string,
+  homeId: string,
+  taskId: string,
+): Promise<BackendTaskDto> {
+  const response = await fetchBackend(taskPath(homeId, taskId, "complete"), {
+    method: "PATCH",
+    apiAccessToken,
+  });
+
+  if (response.status === 401 || response.status === 403) {
+    throw attachHttpStatus(new Error(`Backend complete task unauthorized (${response.status}).`), response.status);
+  }
+
+  if (response.status === 404) {
+    throw attachHttpStatus(new Error("Tarea no encontrada."), 404);
+  }
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    const msg = messageFromNestErrorBody(text, `Error al completar tarea (${response.status}).`);
+    const err = new Error(msg);
+    throw attachHttpStatus(err, response.status);
+  }
+
+  const raw = await response.json();
+  return backendTaskDtoSchema.parse(raw);
+}
+
+export async function reopenBackendTask(
+  apiAccessToken: string,
+  homeId: string,
+  taskId: string,
+): Promise<BackendTaskDto> {
+  const response = await fetchBackend(taskPath(homeId, taskId, "reopen"), {
+    method: "PATCH",
+    apiAccessToken,
+  });
+
+  if (response.status === 401 || response.status === 403) {
+    throw attachHttpStatus(new Error(`Backend reopen task unauthorized (${response.status}).`), response.status);
+  }
+
+  if (response.status === 404) {
+    throw attachHttpStatus(new Error("Tarea no encontrada."), 404);
+  }
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    const msg = messageFromNestErrorBody(text, `Error al reabrir tarea (${response.status}).`);
+    const err = new Error(msg);
+    throw attachHttpStatus(err, response.status);
+  }
+
+  const raw = await response.json();
+  return backendTaskDtoSchema.parse(raw);
+}
+
+export async function postBackendTaskAssignees(
+  apiAccessToken: string,
+  homeId: string,
+  taskId: string,
+  userIds: string[],
+): Promise<BackendTaskDto> {
+  const response = await fetchBackend(taskPath(homeId, taskId, "assignees"), {
+    method: "POST",
+    apiAccessToken,
+    body: JSON.stringify({ userIds }),
+  });
+
+  if (response.status === 401 || response.status === 403) {
+    throw attachHttpStatus(
+      new Error(`Backend POST assignees unauthorized (${response.status}).`),
+      response.status,
+    );
+  }
+
+  if (response.status === 404) {
+    throw attachHttpStatus(new Error("Tarea no encontrada."), 404);
+  }
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    const msg = messageFromNestErrorBody(text, `Error al asignar (${response.status}).`);
+    const err = new Error(msg);
+    throw attachHttpStatus(err, response.status);
+  }
+
+  const raw = await response.json();
+  return backendTaskDtoSchema.parse(raw);
+}
+
+export async function deleteBackendTaskAssignee(
+  apiAccessToken: string,
+  homeId: string,
+  taskId: string,
+  userId: string,
+): Promise<BackendTaskDto> {
+  const response = await fetchBackend(
+    `${taskPath(homeId, taskId, "assignees")}/${encodeURIComponent(userId)}`,
+    {
+      method: "DELETE",
+      apiAccessToken,
+    },
+  );
+
+  if (response.status === 401 || response.status === 403) {
+    throw attachHttpStatus(
+      new Error(`Backend DELETE assignee unauthorized (${response.status}).`),
+      response.status,
+    );
+  }
+
+  if (response.status === 404) {
+    throw attachHttpStatus(new Error("Asignación no encontrada."), 404);
+  }
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    const msg = messageFromNestErrorBody(text, `Error al desasignar (${response.status}).`);
+    const err = new Error(msg);
+    throw attachHttpStatus(err, response.status);
+  }
+
+  const raw = await response.json();
+  return backendTaskDtoSchema.parse(raw);
+}
+
+export async function getBackendTaskEvents(
+  apiAccessToken: string,
+  homeId: string,
+  taskId: string,
+): Promise<BackendTaskEventDto[]> {
+  const response = await fetchBackend(`${taskPath(homeId, taskId)}/events`, {
+    method: "GET",
+    apiAccessToken,
+  });
+
+  if (response.status === 401 || response.status === 403) {
+    throw attachHttpStatus(
+      new Error(`Backend GET task events unauthorized (${response.status}).`),
+      response.status,
+    );
+  }
+
+  if (response.status === 404) {
+    throw attachHttpStatus(new Error("Tarea no encontrada."), 404);
+  }
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => "");
+    throw new Error(`Backend GET task events failed with ${response.status}. ${body || "No body."}`);
+  }
+
+  const raw = await response.json();
+  return z.array(backendTaskEventDtoSchema).parse(raw);
 }
 
 const homeMemberDtoSchema = z.object({
   userId: z.string(),
   name: z.string(),
   publicCode: z.string(),
+  imageUrl: z.string().nullable(),
   role: z.enum(["owner", "member"]),
   joinedAt: z.string(),
 });
