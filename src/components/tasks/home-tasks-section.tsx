@@ -150,15 +150,28 @@ export function HomeTasksSection({
           <ul className="mt-6 flex flex-col gap-2">
             {tasks.map((t) => {
               const due = formatDueDateShort(t.dueDate);
+              const isCompleted = t.computedStatus === "completed";
               return (
                 <li key={t.id}>
                   <Link
                     href={routeHomeTask(homeId, t.id)}
-                    className="neu-focus neu-inset flex flex-col gap-2 rounded-[var(--neu-radius-sm)] px-4 py-3 text-sm text-[var(--neu-text)] transition hover:brightness-[1.01] sm:flex-row sm:items-center sm:justify-between"
+                    className={
+                      isCompleted
+                        ? "neu-focus neu-raised flex flex-col gap-2 rounded-[var(--neu-radius-sm)] border border-white/30 px-4 py-3 text-sm text-[var(--neu-text)] opacity-75 transition hover:brightness-[1.02] hover:opacity-90 sm:flex-row sm:items-center sm:justify-between dark:border-white/10"
+                        : "neu-focus neu-inset flex flex-col gap-2 rounded-[var(--neu-radius-sm)] px-4 py-3 text-sm text-[var(--neu-text)] transition hover:brightness-[1.01] sm:flex-row sm:items-center sm:justify-between"
+                    }
                   >
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-medium">{t.title}</span>
+                        <span
+                          className={
+                            isCompleted
+                              ? "font-medium text-[var(--neu-text-muted)] line-through decoration-[var(--neu-text-muted)]/80"
+                              : "font-medium"
+                          }
+                        >
+                          {t.title}
+                        </span>
                         <span
                           className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold sm:text-xs ${statusBadgeClass(t.computedStatus)}`}
                         >
