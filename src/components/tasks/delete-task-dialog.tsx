@@ -65,13 +65,14 @@ export function DeleteTaskDialog({ homeId, taskId, taskTitle, open, onOpenChange
         aria-label="Cerrar"
         onClick={close}
       />
-      <div
-        className="neu-raised fixed left-1/2 top-1/2 z-[80] w-[min(100%,22rem)] -translate-x-1/2 -translate-y-1/2 rounded-[var(--neu-radius-lg)] p-6 shadow-[var(--neu-shadow-light),var(--neu-shadow-dark)]"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        aria-describedby={descId}
-      >
+      <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 pointer-events-none">
+        <div
+          className="neu-raised pointer-events-auto w-[min(100%,22rem)] rounded-[var(--neu-radius-lg)] p-6 shadow-[var(--neu-shadow-light),var(--neu-shadow-dark)]"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={titleId}
+          aria-describedby={descId}
+        >
         <h2 id={titleId} className="text-lg font-semibold text-[var(--neu-text)]">
           ¿Eliminar tarea?
         </h2>
@@ -103,6 +104,7 @@ export function DeleteTaskDialog({ homeId, taskId, taskTitle, open, onOpenChange
           >
             {pending ? "Eliminando…" : "Eliminar"}
           </button>
+        </div>
         </div>
       </div>
     </>

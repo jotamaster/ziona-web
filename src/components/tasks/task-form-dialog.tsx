@@ -5,7 +5,15 @@ import { useEffect, useId, useRef, useState, useTransition } from "react";
 import type { BackendHomeMemberDto, BackendTaskDto } from "@/lib/api/backend-client";
 import { createTaskAction, updateTaskAction } from "@/lib/tasks/actions";
 
+import { NeuListbox } from "@/components/ui/neu-listbox";
+
 import { datetimeLocalToIso, isoToDatetimeLocalValue } from "./task-utils";
+
+const PRIORITY_OPTIONS = [
+  { value: "low" as const, label: "Baja" },
+  { value: "medium" as const, label: "Media" },
+  { value: "high" as const, label: "Alta" },
+];
 
 type TaskFormDialogProps = {
   open: boolean;
@@ -142,12 +150,13 @@ export function TaskFormDialog({
         aria-label="Cerrar"
         onClick={close}
       />
-      <div
-        className="neu-raised fixed left-1/2 top-1/2 z-[80] max-h-[min(90vh,calc(100vh-2rem))] w-[min(100%,26rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[var(--neu-radius-lg)] p-6 shadow-[var(--neu-shadow-light),var(--neu-shadow-dark)]"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-      >
+      <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 pointer-events-none">
+        <div
+          className="neu-raised pointer-events-auto max-h-[min(90vh,calc(100vh-2rem))] w-[min(100%,26rem)] overflow-y-auto rounded-[var(--neu-radius-lg)] p-6 shadow-[var(--neu-shadow-light),var(--neu-shadow-dark)]"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={titleId}
+        >
         <h2 id={titleId} className="text-lg font-semibold text-[var(--neu-text)]">
           {heading}
         </h2>
@@ -188,17 +197,13 @@ export function TaskFormDialog({
             <label htmlFor={`${titleId}-prio`} className="mb-1.5 block text-sm font-medium text-[var(--neu-text-muted)]">
               Prioridad
             </label>
-            <select
+            <NeuListbox
               id={`${titleId}-prio`}
               value={priority}
-              onChange={(e) => setPriority(e.target.value as "low" | "medium" | "high")}
-              className="neu-inset w-full rounded-[var(--neu-radius-sm)] px-3 py-2.5 text-base text-[var(--neu-text)] outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--neu-accent)_45%,transparent)]"
+              onChange={setPriority}
+              options={PRIORITY_OPTIONS}
               disabled={pending}
-            >
-              <option value="low">Baja</option>
-              <option value="medium">Media</option>
-              <option value="high">Alta</option>
-            </select>
+            />
           </div>
           <div>
             <label htmlFor={`${titleId}-due`} className="mb-1.5 block text-sm font-medium text-[var(--neu-text-muted)]">
@@ -260,6 +265,7 @@ export function TaskFormDialog({
             </button>
           </div>
         </form>
+        </div>
       </div>
     </>
   );
