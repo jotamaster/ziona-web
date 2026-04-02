@@ -15,7 +15,7 @@ export function LoginScreen({ signInLabel = "Continuar con Google" }: LoginScree
         <div className="space-y-2">
           <h1 className="text-3xl font-semibold tracking-tight text-[var(--neu-text)]">Ziona</h1>
           <p className="text-pretty text-[var(--neu-text-muted)]">
-            Inicia sesión para gestionar tus hogares e invitaciones en un solo lugar.
+            Inicia sesión para gestionar tus espacios e invitaciones en un solo lugar.
           </p>
         </div>
 

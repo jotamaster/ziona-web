@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Ziona",
-  description: "Gestiona tus hogares e invitaciones",
+  description: "Gestiona tus espacios e invitaciones",
 };
 
 export default function RootLayout({

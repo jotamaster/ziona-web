@@ -18,8 +18,8 @@ export function UserMenuNav({ onNavigate }: UserMenuNavProps) {
 
   return (
     <nav className="flex flex-col gap-1 pt-2" aria-label="Cuenta">
-      <Link href={ROUTES.homes} className={rowClass} onClick={close}>
-        Hogares
+      <Link href={ROUTES.spaces} className={rowClass} onClick={close}>
+        Espacios
       </Link>
       <Link href={ROUTES.invitations} className={rowClass} onClick={close}>
         Invitaciones

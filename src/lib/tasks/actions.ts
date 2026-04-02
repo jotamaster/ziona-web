@@ -20,7 +20,7 @@ import {
   type PatchBackendTaskBody,
 } from "@/lib/api/backend-client";
 import { getApiAccessTokenFromCookies } from "@/lib/auth/get-api-access-token";
-import { ROUTES, routeHomeAdmin, routeHomeTask } from "@/lib/routes";
+import { ROUTES, routeSpaceAdmin, routeSpaceTask } from "@/lib/routes";
 
 export type ListTasksState = { ok: true; tasks: BackendTaskDto[] } | { ok: false; message: string };
 
@@ -30,11 +30,11 @@ function getErrorStatus(e: unknown): number | undefined {
   return e && typeof e === "object" && "status" in e ? (e as { status: number }).status : undefined;
 }
 
-function revalidateTaskViews(homeId: string, taskId?: string) {
+function revalidateTaskViews(spaceId: string, taskId?: string) {
   revalidatePath(ROUTES.app);
-  revalidatePath(routeHomeAdmin(homeId));
+  revalidatePath(routeSpaceAdmin(spaceId));
   if (taskId) {
-    revalidatePath(routeHomeTask(homeId, taskId));
+    revalidatePath(routeSpaceTask(spaceId, taskId));
   }
 }
 
@@ -42,15 +42,15 @@ async function requireToken(): Promise<string | null> {
   return getApiAccessTokenFromCookies();
 }
 
-export async function listTasksForHomeAction(homeId: string): Promise<ListTasksState> {
+export async function listTasksForSpaceAction(spaceId: string): Promise<ListTasksState> {
   const apiAccessToken = await requireToken();
   if (!apiAccessToken) {
     redirect(ROUTES.login);
   }
 
-  const id = homeId?.trim();
+  const id = spaceId?.trim();
   if (!id) {
-    return { ok: false, message: "Hogar inválido." };
+    return { ok: false, message: "Espacio inválido." };
   }
 
   try {
@@ -62,23 +62,23 @@ export async function listTasksForHomeAction(homeId: string): Promise<ListTasksS
       redirect(ROUTES.login);
     }
     if (status === 403) {
-      return { ok: false, message: "No tienes acceso a las tareas de este hogar." };
+      return { ok: false, message: "No tienes acceso a las tareas de este espacio." };
     }
     if (status === 404) {
-      return { ok: false, message: "Este hogar no existe." };
+      return { ok: false, message: "Este espacio no existe." };
     }
     const message = e instanceof Error ? e.message : "No se pudieron cargar las tareas.";
     return { ok: false, message };
   }
 }
 
-export async function getTaskForHomeAction(homeId: string, taskId: string): Promise<TaskActionOk<BackendTaskDto>> {
+export async function getTaskForSpaceAction(spaceId: string, taskId: string): Promise<TaskActionOk<BackendTaskDto>> {
   const apiAccessToken = await requireToken();
   if (!apiAccessToken) {
     redirect(ROUTES.login);
   }
 
-  const h = homeId?.trim();
+  const h = spaceId?.trim();
   const t = taskId?.trim();
   if (!h || !t) {
     return { ok: false, message: "Datos inválidos." };
@@ -104,7 +104,7 @@ export async function getTaskForHomeAction(homeId: string, taskId: string): Prom
 }
 
 export async function getTaskEventsAction(
-  homeId: string,
+  spaceId: string,
   taskId: string,
 ): Promise<TaskActionOk<BackendTaskEventDto[]>> {
   const apiAccessToken = await requireToken();
@@ -112,7 +112,7 @@ export async function getTaskEventsAction(
     redirect(ROUTES.login);
   }
 
-  const h = homeId?.trim();
+  const h = spaceId?.trim();
   const t = taskId?.trim();
   if (!h || !t) {
     return { ok: false, message: "Datos inválidos." };
@@ -138,7 +138,7 @@ export async function getTaskEventsAction(
 }
 
 export async function createTaskAction(
-  homeId: string,
+  spaceId: string,
   body: CreateBackendTaskBody,
 ): Promise<TaskActionOk<BackendTaskDto>> {
   const apiAccessToken = await requireToken();
@@ -146,9 +146,9 @@ export async function createTaskAction(
     redirect(ROUTES.login);
   }
 
-  const h = homeId?.trim();
+  const h = spaceId?.trim();
   if (!h) {
-    return { ok: false, message: "Hogar inválido." };
+    return { ok: false, message: "Espacio inválido." };
   }
 
   try {
@@ -161,10 +161,10 @@ export async function createTaskAction(
       redirect(ROUTES.login);
     }
     if (status === 403) {
-      return { ok: false, message: "No puedes crear tareas en este hogar." };
+      return { ok: false, message: "No puedes crear tareas en este espacio." };
     }
     if (status === 404) {
-      return { ok: false, message: "Este hogar no existe." };
+      return { ok: false, message: "Este espacio no existe." };
     }
     const message = e instanceof Error ? e.message : "No se pudo crear la tarea.";
     return { ok: false, message };
@@ -172,7 +172,7 @@ export async function createTaskAction(
 }
 
 export async function updateTaskAction(
-  homeId: string,
+  spaceId: string,
   taskId: string,
   body: PatchBackendTaskBody,
 ): Promise<TaskActionOk<BackendTaskDto>> {
@@ -181,7 +181,7 @@ export async function updateTaskAction(
     redirect(ROUTES.login);
   }
 
-  const h = homeId?.trim();
+  const h = spaceId?.trim();
   const t = taskId?.trim();
   if (!h || !t) {
     return { ok: false, message: "Datos inválidos." };
@@ -207,13 +207,13 @@ export async function updateTaskAction(
   }
 }
 
-export async function deleteTaskAction(homeId: string, taskId: string): Promise<TaskActionOk<void>> {
+export async function deleteTaskAction(spaceId: string, taskId: string): Promise<TaskActionOk<void>> {
   const apiAccessToken = await requireToken();
   if (!apiAccessToken) {
     redirect(ROUTES.login);
   }
 
-  const h = homeId?.trim();
+  const h = spaceId?.trim();
   const t = taskId?.trim();
   if (!h || !t) {
     return { ok: false, message: "Datos inválidos." };
@@ -239,13 +239,13 @@ export async function deleteTaskAction(homeId: string, taskId: string): Promise<
   }
 }
 
-export async function completeTaskAction(homeId: string, taskId: string): Promise<TaskActionOk<BackendTaskDto>> {
+export async function completeTaskAction(spaceId: string, taskId: string): Promise<TaskActionOk<BackendTaskDto>> {
   const apiAccessToken = await requireToken();
   if (!apiAccessToken) {
     redirect(ROUTES.login);
   }
 
-  const h = homeId?.trim();
+  const h = spaceId?.trim();
   const t = taskId?.trim();
   if (!h || !t) {
     return { ok: false, message: "Datos inválidos." };
@@ -271,13 +271,13 @@ export async function completeTaskAction(homeId: string, taskId: string): Promis
   }
 }
 
-export async function reopenTaskAction(homeId: string, taskId: string): Promise<TaskActionOk<BackendTaskDto>> {
+export async function reopenTaskAction(spaceId: string, taskId: string): Promise<TaskActionOk<BackendTaskDto>> {
   const apiAccessToken = await requireToken();
   if (!apiAccessToken) {
     redirect(ROUTES.login);
   }
 
-  const h = homeId?.trim();
+  const h = spaceId?.trim();
   const t = taskId?.trim();
   if (!h || !t) {
     return { ok: false, message: "Datos inválidos." };
@@ -304,7 +304,7 @@ export async function reopenTaskAction(homeId: string, taskId: string): Promise<
 }
 
 export async function assignTaskUsersAction(
-  homeId: string,
+  spaceId: string,
   taskId: string,
   userIds: string[],
 ): Promise<TaskActionOk<BackendTaskDto>> {
@@ -313,7 +313,7 @@ export async function assignTaskUsersAction(
     redirect(ROUTES.login);
   }
 
-  const h = homeId?.trim();
+  const h = spaceId?.trim();
   const t = taskId?.trim();
   if (!h || !t) {
     return { ok: false, message: "Datos inválidos." };
@@ -340,7 +340,7 @@ export async function assignTaskUsersAction(
 }
 
 export async function unassignTaskUserAction(
-  homeId: string,
+  spaceId: string,
   taskId: string,
   userId: string,
 ): Promise<TaskActionOk<BackendTaskDto>> {
@@ -349,7 +349,7 @@ export async function unassignTaskUserAction(
     redirect(ROUTES.login);
   }
 
-  const h = homeId?.trim();
+  const h = spaceId?.trim();
   const t = taskId?.trim();
   const u = userId?.trim();
   if (!h || !t || !u) {

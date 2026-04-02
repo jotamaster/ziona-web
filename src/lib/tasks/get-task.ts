@@ -10,14 +10,14 @@ import {
 import { getApiAccessTokenFromCookies } from "@/lib/auth/get-api-access-token";
 import { ROUTES } from "@/lib/routes";
 
-export const getTaskForPage = cache(async (homeId: string, taskId: string): Promise<BackendTaskDto | null> => {
+export const getTaskForPage = cache(async (spaceId: string, taskId: string): Promise<BackendTaskDto | null> => {
   const apiAccessToken = await getApiAccessTokenFromCookies();
   if (!apiAccessToken) {
     redirect(ROUTES.login);
   }
 
   try {
-    return await getBackendTask(apiAccessToken, homeId, taskId);
+    return await getBackendTask(apiAccessToken, spaceId, taskId);
   } catch (e) {
     const status = e && typeof e === "object" && "status" in e ? (e as { status: number }).status : undefined;
     if (status === 401 || status === 403) {
@@ -31,14 +31,14 @@ export const getTaskForPage = cache(async (homeId: string, taskId: string): Prom
 });
 
 export const getTaskEventsForPage = cache(
-  async (homeId: string, taskId: string): Promise<BackendTaskEventDto[]> => {
+  async (spaceId: string, taskId: string): Promise<BackendTaskEventDto[]> => {
     const apiAccessToken = await getApiAccessTokenFromCookies();
     if (!apiAccessToken) {
       redirect(ROUTES.login);
     }
 
     try {
-      return await getBackendTaskEvents(apiAccessToken, homeId, taskId);
+      return await getBackendTaskEvents(apiAccessToken, spaceId, taskId);
     } catch (e) {
       const status = e && typeof e === "object" && "status" in e ? (e as { status: number }).status : undefined;
       if (status === 401 || status === 403) {

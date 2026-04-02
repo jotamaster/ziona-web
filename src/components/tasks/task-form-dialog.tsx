@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef, useState, useTransition } from "react";
 
-import type { BackendHomeMemberDto, BackendTaskDto } from "@/lib/api/backend-client";
+import type { BackendSpaceMemberDto, BackendTaskDto } from "@/lib/api/backend-client";
 import { createTaskAction, updateTaskAction } from "@/lib/tasks/actions";
 
 import { NeuListbox } from "@/components/ui/neu-listbox";
@@ -18,17 +18,17 @@ const PRIORITY_OPTIONS = [
 type TaskFormDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  homeId: string;
+  spaceId: string;
   mode: "create" | "edit";
   task?: BackendTaskDto | null;
-  members: BackendHomeMemberDto[];
+  members: BackendSpaceMemberDto[];
   onSuccess?: () => void;
 };
 
 export function TaskFormDialog({
   open,
   onOpenChange,
-  homeId,
+  spaceId,
   mode,
   task,
   members,
@@ -102,7 +102,7 @@ export function TaskFormDialog({
     startTransition(async () => {
       if (mode === "create") {
         const dueIso = datetimeLocalToIso(dueLocal);
-        const result = await createTaskAction(homeId, {
+        const result = await createTaskAction(spaceId, {
           title: trimmedTitle,
           ...(description.trim() ? { description: description.trim() } : {}),
           priority,
@@ -122,7 +122,7 @@ export function TaskFormDialog({
         const descTrim = description.trim();
         const duePatch =
           dueLocal.trim() === "" ? null : (datetimeLocalToIso(dueLocal) ?? null);
-        const result = await updateTaskAction(homeId, task.id, {
+        const result = await updateTaskAction(spaceId, task.id, {
           title: trimmedTitle,
           description: descTrim.length ? descTrim : null,
           priority,

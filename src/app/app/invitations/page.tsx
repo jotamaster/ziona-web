@@ -16,7 +16,7 @@ function SentRow({ item }: { item: BackendInvitationListItem }) {
   return (
     <li className="neu-inset flex flex-col gap-3 rounded-[var(--neu-radius-sm)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0 flex-1">
-        <p className="font-medium text-[var(--neu-text)]">{item.home.name}</p>
+        <p className="font-medium text-[var(--neu-text)]">{item.space.name}</p>
         {item.invitedUser ? (
           <p className="mt-1 text-sm text-[var(--neu-text-muted)]">
             Invitado: {item.invitedUser.name}{" "}
@@ -37,7 +37,7 @@ function ReceivedRow({ item }: { item: BackendInvitationListItem }) {
   return (
     <li className="neu-inset flex flex-col gap-3 rounded-[var(--neu-radius-sm)] px-4 py-3 sm:flex-row sm:items-start sm:justify-between">
       <div className="min-w-0 flex-1">
-        <p className="font-medium text-[var(--neu-text)]">{item.home.name}</p>
+        <p className="font-medium text-[var(--neu-text)]">{item.space.name}</p>
         {item.invitedBy ? (
           <p className="mt-1 text-sm text-[var(--neu-text-muted)]">
             De: {item.invitedBy.name}{" "}

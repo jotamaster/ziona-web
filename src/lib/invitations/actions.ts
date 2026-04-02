@@ -11,21 +11,21 @@ import {
   rejectBackendInvitation,
 } from "@/lib/api/backend-client";
 import { getApiAccessTokenFromCookies } from "@/lib/auth/get-api-access-token";
-import { ROUTES, routeHomeAdmin } from "@/lib/routes";
+import { ROUTES, routeSpaceAdmin } from "@/lib/routes";
 
 const publicCodeSchema = z.string().trim().min(1, "El código público es obligatorio.").max(64, "Máximo 64 caracteres.");
 
 export type InvitationMutationState = { ok: true } | { ok: false; message: string };
 
-function revalidateInvitationsAndHome(homeId?: string) {
+function revalidateInvitationsAndSpace(spaceId?: string) {
   revalidatePath(ROUTES.invitations);
-  revalidatePath(ROUTES.homes);
-  if (homeId) {
-    revalidatePath(routeHomeAdmin(homeId));
+  revalidatePath(ROUTES.spaces);
+  if (spaceId) {
+    revalidatePath(routeSpaceAdmin(spaceId));
   }
 }
 
-export async function createInvitationAction(homeId: string, publicCode: string): Promise<InvitationMutationState> {
+export async function createInvitationAction(spaceId: string, publicCode: string): Promise<InvitationMutationState> {
   const parsed = publicCodeSchema.safeParse(publicCode);
   if (!parsed.success) {
     return { ok: false, message: parsed.error.issues[0]?.message ?? "Código inválido." };
@@ -36,14 +36,14 @@ export async function createInvitationAction(homeId: string, publicCode: string)
     redirect(ROUTES.login);
   }
 
-  const id = homeId?.trim();
+  const id = spaceId?.trim();
   if (!id) {
-    return { ok: false, message: "Hogar inválido." };
+    return { ok: false, message: "Espacio inválido." };
   }
 
   try {
     await createBackendInvitation(apiAccessToken, id, parsed.data);
-    revalidateInvitationsAndHome(id);
+    revalidateInvitationsAndSpace(id);
     return { ok: true };
   } catch (e) {
     const status = e && typeof e === "object" && "status" in e ? (e as { status: number }).status : undefined;
@@ -68,7 +68,7 @@ export async function acceptInvitationAction(invitationId: string): Promise<Invi
 
   try {
     const res = await acceptBackendInvitation(apiAccessToken, id);
-    revalidateInvitationsAndHome(res.homeId);
+    revalidateInvitationsAndSpace(res.spaceId);
     revalidatePath(ROUTES.app);
     return { ok: true };
   } catch (e) {
@@ -94,7 +94,7 @@ export async function rejectInvitationAction(invitationId: string): Promise<Invi
 
   try {
     await rejectBackendInvitation(apiAccessToken, id);
-    revalidateInvitationsAndHome();
+    revalidateInvitationsAndSpace();
     return { ok: true };
   } catch (e) {
     const status = e && typeof e === "object" && "status" in e ? (e as { status: number }).status : undefined;
@@ -119,7 +119,7 @@ export async function cancelInvitationAction(invitationId: string): Promise<Invi
 
   try {
     const res = await cancelBackendInvitation(apiAccessToken, id);
-    revalidateInvitationsAndHome(res.homeId);
+    revalidateInvitationsAndSpace(res.spaceId);
     return { ok: true };
   } catch (e) {
     const status = e && typeof e === "object" && "status" in e ? (e as { status: number }).status : undefined;

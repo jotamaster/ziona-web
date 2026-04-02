@@ -4,7 +4,7 @@ import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import type { BackendHomeMemberDto, BackendTaskDto } from "@/lib/api/backend-client";
+import type { BackendSpaceMemberDto, BackendTaskDto } from "@/lib/api/backend-client";
 import type { BackendTaskEventDto } from "@/lib/api/backend-client";
 import { MemberAvatar } from "@/components/ui/member-avatar";
 import { NeuSurface } from "@/components/ui/neu-surface";
@@ -22,10 +22,10 @@ import {
 } from "./task-utils";
 
 type TaskDetailViewProps = {
-  homeId: string;
+  spaceId: string;
   initialTask: BackendTaskDto;
   initialEvents: BackendTaskEventDto[];
-  members: BackendHomeMemberDto[];
+  members: BackendSpaceMemberDto[];
 };
 
 function statusBadgeClass(computed: BackendTaskDto["computedStatus"]): string {
@@ -51,7 +51,7 @@ function priorityBadgeClass(p: BackendTaskDto["priority"]): string {
 }
 
 function memberPhotoMeta(
-  members: BackendHomeMemberDto[],
+  members: BackendSpaceMemberDto[],
   assignee: BackendTaskDto["assignees"][number],
 ): { name: string; imageUrl: string | null } {
   const m = members.find((x) => x.userId === assignee.userId);
@@ -61,7 +61,7 @@ function memberPhotoMeta(
   };
 }
 
-export function TaskDetailView({ homeId, initialTask, initialEvents, members }: TaskDetailViewProps) {
+export function TaskDetailView({ spaceId, initialTask, initialEvents, members }: TaskDetailViewProps) {
   const router = useRouter();
   const [task, setTask] = useState(initialTask);
   const [events, setEvents] = useState(initialEvents);
@@ -83,7 +83,7 @@ export function TaskDetailView({ homeId, initialTask, initialEvents, members }: 
   const onComplete = () => {
     setActionError(null);
     startTransition(async () => {
-      const result = await completeTaskAction(homeId, task.id);
+      const result = await completeTaskAction(spaceId, task.id);
       if (result.ok) {
         setTask(result.data);
         refresh();
@@ -96,7 +96,7 @@ export function TaskDetailView({ homeId, initialTask, initialEvents, members }: 
   const onReopen = () => {
     setActionError(null);
     startTransition(async () => {
-      const result = await reopenTaskAction(homeId, task.id);
+      const result = await reopenTaskAction(spaceId, task.id);
       if (result.ok) {
         setTask(result.data);
         refresh();
@@ -109,7 +109,7 @@ export function TaskDetailView({ homeId, initialTask, initialEvents, members }: 
   const onUnassign = (userId: string) => {
     setActionError(null);
     startTransition(async () => {
-      const result = await unassignTaskUserAction(homeId, task.id, userId);
+      const result = await unassignTaskUserAction(spaceId, task.id, userId);
       if (result.ok) {
         setTask(result.data);
         refresh();
@@ -271,7 +271,7 @@ export function TaskDetailView({ homeId, initialTask, initialEvents, members }: 
       <TaskFormDialog
         open={editOpen}
         onOpenChange={setEditOpen}
-        homeId={homeId}
+        spaceId={spaceId}
         mode="edit"
         task={task}
         members={members}
@@ -281,7 +281,7 @@ export function TaskDetailView({ homeId, initialTask, initialEvents, members }: 
       />
 
       <DeleteTaskDialog
-        homeId={homeId}
+        spaceId={spaceId}
         taskId={task.id}
         taskTitle={task.title}
         open={deleteOpen}
@@ -289,7 +289,7 @@ export function TaskDetailView({ homeId, initialTask, initialEvents, members }: 
       />
 
       <TaskAssignDialog
-        homeId={homeId}
+        spaceId={spaceId}
         task={task}
         members={members}
         open={assignOpen}

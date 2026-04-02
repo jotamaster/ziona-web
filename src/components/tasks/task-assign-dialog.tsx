@@ -3,19 +3,19 @@
 import { useEffect, useId, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
-import type { BackendHomeMemberDto } from "@/lib/api/backend-client";
+import type { BackendSpaceMemberDto } from "@/lib/api/backend-client";
 import type { BackendTaskDto } from "@/lib/api/backend-client";
 import { assignTaskUsersAction } from "@/lib/tasks/actions";
 
 type TaskAssignDialogProps = {
-  homeId: string;
+  spaceId: string;
   task: BackendTaskDto;
-  members: BackendHomeMemberDto[];
+  members: BackendSpaceMemberDto[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
 
-export function TaskAssignDialog({ homeId, task, members, open, onOpenChange }: TaskAssignDialogProps) {
+export function TaskAssignDialog({ spaceId, task, members, open, onOpenChange }: TaskAssignDialogProps) {
   const router = useRouter();
   const titleId = useId();
   const [pending, startTransition] = useTransition();
@@ -64,7 +64,7 @@ export function TaskAssignDialog({ homeId, task, members, open, onOpenChange }: 
     }
     setError(null);
     startTransition(async () => {
-      const result = await assignTaskUsersAction(homeId, task.id, [...selected]);
+      const result = await assignTaskUsersAction(spaceId, task.id, [...selected]);
       if (result.ok) {
         close();
         router.refresh();

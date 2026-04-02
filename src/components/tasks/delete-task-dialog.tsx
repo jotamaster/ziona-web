@@ -7,14 +7,14 @@ import { ROUTES } from "@/lib/routes";
 import { deleteTaskAction } from "@/lib/tasks/actions";
 
 type DeleteTaskDialogProps = {
-  homeId: string;
+  spaceId: string;
   taskId: string;
   taskTitle: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
 
-export function DeleteTaskDialog({ homeId, taskId, taskTitle, open, onOpenChange }: DeleteTaskDialogProps) {
+export function DeleteTaskDialog({ spaceId, taskId, taskTitle, open, onOpenChange }: DeleteTaskDialogProps) {
   const router = useRouter();
   const titleId = useId();
   const descId = useId();
@@ -46,7 +46,7 @@ export function DeleteTaskDialog({ homeId, taskId, taskTitle, open, onOpenChange
   const confirm = () => {
     setError(null);
     startTransition(async () => {
-      const result = await deleteTaskAction(homeId, taskId);
+      const result = await deleteTaskAction(spaceId, taskId);
       if (result.ok) {
         close();
         router.push(ROUTES.app);

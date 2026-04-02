@@ -1,14 +1,14 @@
 export const ROUTES = {
   login: "/",
   app: "/app",
-  homes: "/app/homes",
+  spaces: "/app/spaces",
   invitations: "/app/invitations",
 } as const;
 
-export function routeHomeAdmin(homeId: string): string {
-  return `/app/homes/${encodeURIComponent(homeId)}`;
+export function routeSpaceAdmin(spaceId: string): string {
+  return `/app/spaces/${encodeURIComponent(spaceId)}`;
 }
 
-export function routeHomeTask(homeId: string, taskId: string): string {
-  return `/app/homes/${encodeURIComponent(homeId)}/tasks/${encodeURIComponent(taskId)}`;
+export function routeSpaceTask(spaceId: string, taskId: string): string {
+  return `/app/spaces/${encodeURIComponent(spaceId)}/tasks/${encodeURIComponent(taskId)}`;
 }

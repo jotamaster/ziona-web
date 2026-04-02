@@ -1,7 +1,7 @@
 "use client";
 
 import { AppTopBar } from "@/components/shell/app-top-bar";
-import { ActiveHomeHeaderBlock } from "@/components/shell/active-home-header-block";
+import { ActiveSpaceHeaderBlock } from "@/components/shell/active-space-header-block";
 import type { ShellUser } from "@/components/shell/types";
 import { UserMenu } from "@/components/shell/user-menu";
 
@@ -16,7 +16,7 @@ export function AuthenticatedShell({ user, children }: AuthenticatedShellProps) 
       <AppTopBar
         leftContent={
           <div className="flex min-w-0 items-center gap-1 sm:gap-0.5">
-            <ActiveHomeHeaderBlock />
+            <ActiveSpaceHeaderBlock />
           </div>
         }
         rightSlot={<UserMenu user={user} />}

@@ -66,7 +66,7 @@ export async function getBackendMe(apiAccessToken: string) {
   return authMeSchema.parse(raw);
 }
 
-const homeDtoSchema = z
+const spaceDtoSchema = z
   .object({
     id: z.string(),
     name: z.string(),
@@ -74,72 +74,72 @@ const homeDtoSchema = z
   })
   .passthrough();
 
-export type BackendHomeDto = z.infer<typeof homeDtoSchema>;
+export type BackendSpaceDto = z.infer<typeof spaceDtoSchema>;
 
-export async function getBackendHomes(apiAccessToken: string): Promise<BackendHomeDto[]> {
-  const response = await fetchBackend("/homes", {
+export async function getBackendSpaces(apiAccessToken: string): Promise<BackendSpaceDto[]> {
+  const response = await fetchBackend("/spaces", {
     method: "GET",
     apiAccessToken,
   });
 
   if (response.status === 401 || response.status === 403) {
-    const err = new Error(`Backend /homes unauthorized (${response.status}).`);
+    const err = new Error(`Backend /spaces unauthorized (${response.status}).`);
     (err as Error & { status: number }).status = response.status;
     throw err;
   }
 
   if (!response.ok) {
     const body = await response.text().catch(() => "");
-    throw new Error(`Backend /homes failed with ${response.status}. ${body || "No body."}`);
+    throw new Error(`Backend /spaces failed with ${response.status}. ${body || "No body."}`);
   }
 
   const raw = await response.json();
-  return z.array(homeDtoSchema).parse(raw);
+  return z.array(spaceDtoSchema).parse(raw);
 }
 
-export async function createBackendHome(apiAccessToken: string, name: string): Promise<BackendHomeDto> {
-  const response = await fetchBackend("/homes", {
+export async function createBackendSpace(apiAccessToken: string, name: string): Promise<BackendSpaceDto> {
+  const response = await fetchBackend("/spaces", {
     method: "POST",
     apiAccessToken,
     body: JSON.stringify({ name }),
   });
 
   if (response.status === 401 || response.status === 403) {
-    const err = new Error(`Backend POST /homes unauthorized (${response.status}).`);
+    const err = new Error(`Backend POST /spaces unauthorized (${response.status}).`);
     (err as Error & { status: number }).status = response.status;
     throw err;
   }
 
   if (!response.ok) {
     const body = await response.text().catch(() => "");
-    throw new Error(`Backend POST /homes failed with ${response.status}. ${body || "No body."}`);
+    throw new Error(`Backend POST /spaces failed with ${response.status}. ${body || "No body."}`);
   }
 
   const raw = await response.json();
-  return homeDtoSchema.parse(raw);
+  return spaceDtoSchema.parse(raw);
 }
 
-export async function deleteBackendHome(apiAccessToken: string, homeId: string): Promise<void> {
-  const response = await fetchBackend(`/homes/${encodeURIComponent(homeId)}`, {
+export async function deleteBackendSpace(apiAccessToken: string, spaceId: string): Promise<void> {
+  const response = await fetchBackend(`/spaces/${encodeURIComponent(spaceId)}`, {
     method: "DELETE",
     apiAccessToken,
   });
 
   if (response.status === 401 || response.status === 403) {
-    const err = new Error(`Backend DELETE /homes/${homeId} unauthorized (${response.status}).`);
+    const err = new Error(`Backend DELETE /spaces/${spaceId} unauthorized (${response.status}).`);
     (err as Error & { status: number }).status = response.status;
     throw err;
   }
 
   if (response.status === 404) {
-    const err = new Error("Este hogar ya no existe.");
+    const err = new Error("Este espacio ya no existe.");
     (err as Error & { status: number }).status = 404;
     throw err;
   }
 
   if (!response.ok) {
     const body = await response.text().catch(() => "");
-    throw new Error(`Backend DELETE /homes failed with ${response.status}. ${body || "No body."}`);
+    throw new Error(`Backend DELETE /spaces failed with ${response.status}. ${body || "No body."}`);
   }
 }
 
@@ -158,7 +158,7 @@ const taskAssigneeRowSchema = z.object({
 
 export const backendTaskDtoSchema = z.object({
   id: z.string(),
-  homeId: z.string(),
+  spaceId: z.string(),
   title: z.string(),
   description: z.string().nullable(),
   priority: z.enum(["low", "medium", "high"]),
@@ -212,8 +212,8 @@ export type PatchBackendTaskBody = {
   dueDate?: string | null;
 };
 
-function taskPath(homeId: string, taskId?: string, suffix?: string): string {
-  const base = `/homes/${encodeURIComponent(homeId)}/tasks`;
+function taskPath(spaceId: string, taskId?: string, suffix?: string): string {
+  const base = `/spaces/${encodeURIComponent(spaceId)}/tasks`;
   if (!taskId) return base;
   const t = `${base}/${encodeURIComponent(taskId)}`;
   return suffix ? `${t}/${suffix}` : t;
@@ -229,26 +229,26 @@ function attachHttpStatus(err: Error, status: number): Error {
   return err;
 }
 
-export async function getBackendTasks(apiAccessToken: string, homeId: string): Promise<BackendTaskDto[]> {
-  const response = await fetchBackend(taskPath(homeId), {
+export async function getBackendTasks(apiAccessToken: string, spaceId: string): Promise<BackendTaskDto[]> {
+  const response = await fetchBackend(taskPath(spaceId), {
     method: "GET",
     apiAccessToken,
   });
 
   if (response.status === 401 || response.status === 403) {
     throw attachHttpStatus(
-      new Error(`Backend GET /homes/${homeId}/tasks unauthorized (${response.status}).`),
+      new Error(`Backend GET /spaces/${spaceId}/tasks unauthorized (${response.status}).`),
       response.status,
     );
   }
 
   if (response.status === 404) {
-    throw attachHttpStatus(new Error("Hogar no encontrado."), 404);
+    throw attachHttpStatus(new Error("Espacio no encontrado."), 404);
   }
 
   if (!response.ok) {
     const body = await response.text().catch(() => "");
-    throw new Error(`Backend GET /homes/${homeId}/tasks failed with ${response.status}. ${body || "No body."}`);
+    throw new Error(`Backend GET /spaces/${spaceId}/tasks failed with ${response.status}. ${body || "No body."}`);
   }
 
   const raw = await response.json();
@@ -257,10 +257,10 @@ export async function getBackendTasks(apiAccessToken: string, homeId: string): P
 
 export async function getBackendTask(
   apiAccessToken: string,
-  homeId: string,
+  spaceId: string,
   taskId: string,
 ): Promise<BackendTaskDto> {
-  const response = await fetchBackend(taskPath(homeId, taskId), {
+  const response = await fetchBackend(taskPath(spaceId, taskId), {
     method: "GET",
     apiAccessToken,
   });
@@ -286,10 +286,10 @@ export async function getBackendTask(
 
 export async function createBackendTask(
   apiAccessToken: string,
-  homeId: string,
+  spaceId: string,
   body: CreateBackendTaskBody,
 ): Promise<BackendTaskDto> {
-  const response = await fetchBackend(taskPath(homeId), {
+  const response = await fetchBackend(taskPath(spaceId), {
     method: "POST",
     apiAccessToken,
     body: JSON.stringify(body),
@@ -300,7 +300,7 @@ export async function createBackendTask(
   }
 
   if (response.status === 404) {
-    throw attachHttpStatus(new Error("Hogar no encontrado."), 404);
+    throw attachHttpStatus(new Error("Espacio no encontrado."), 404);
   }
 
   if (!response.ok) {
@@ -316,11 +316,11 @@ export async function createBackendTask(
 
 export async function patchBackendTask(
   apiAccessToken: string,
-  homeId: string,
+  spaceId: string,
   taskId: string,
   body: PatchBackendTaskBody,
 ): Promise<BackendTaskDto> {
-  const response = await fetchBackend(taskPath(homeId, taskId), {
+  const response = await fetchBackend(taskPath(spaceId, taskId), {
     method: "PATCH",
     apiAccessToken,
     body: JSON.stringify(body),
@@ -345,8 +345,8 @@ export async function patchBackendTask(
   return backendTaskDtoSchema.parse(raw);
 }
 
-export async function deleteBackendTask(apiAccessToken: string, homeId: string, taskId: string): Promise<void> {
-  const response = await fetchBackend(taskPath(homeId, taskId), {
+export async function deleteBackendTask(apiAccessToken: string, spaceId: string, taskId: string): Promise<void> {
+  const response = await fetchBackend(taskPath(spaceId, taskId), {
     method: "DELETE",
     apiAccessToken,
   });
@@ -367,10 +367,10 @@ export async function deleteBackendTask(apiAccessToken: string, homeId: string, 
 
 export async function completeBackendTask(
   apiAccessToken: string,
-  homeId: string,
+  spaceId: string,
   taskId: string,
 ): Promise<BackendTaskDto> {
-  const response = await fetchBackend(taskPath(homeId, taskId, "complete"), {
+  const response = await fetchBackend(taskPath(spaceId, taskId, "complete"), {
     method: "PATCH",
     apiAccessToken,
   });
@@ -396,10 +396,10 @@ export async function completeBackendTask(
 
 export async function reopenBackendTask(
   apiAccessToken: string,
-  homeId: string,
+  spaceId: string,
   taskId: string,
 ): Promise<BackendTaskDto> {
-  const response = await fetchBackend(taskPath(homeId, taskId, "reopen"), {
+  const response = await fetchBackend(taskPath(spaceId, taskId, "reopen"), {
     method: "PATCH",
     apiAccessToken,
   });
@@ -425,11 +425,11 @@ export async function reopenBackendTask(
 
 export async function postBackendTaskAssignees(
   apiAccessToken: string,
-  homeId: string,
+  spaceId: string,
   taskId: string,
   userIds: string[],
 ): Promise<BackendTaskDto> {
-  const response = await fetchBackend(taskPath(homeId, taskId, "assignees"), {
+  const response = await fetchBackend(taskPath(spaceId, taskId, "assignees"), {
     method: "POST",
     apiAccessToken,
     body: JSON.stringify({ userIds }),
@@ -459,12 +459,12 @@ export async function postBackendTaskAssignees(
 
 export async function deleteBackendTaskAssignee(
   apiAccessToken: string,
-  homeId: string,
+  spaceId: string,
   taskId: string,
   userId: string,
 ): Promise<BackendTaskDto> {
   const response = await fetchBackend(
-    `${taskPath(homeId, taskId, "assignees")}/${encodeURIComponent(userId)}`,
+    `${taskPath(spaceId, taskId, "assignees")}/${encodeURIComponent(userId)}`,
     {
       method: "DELETE",
       apiAccessToken,
@@ -495,10 +495,10 @@ export async function deleteBackendTaskAssignee(
 
 export async function getBackendTaskEvents(
   apiAccessToken: string,
-  homeId: string,
+  spaceId: string,
   taskId: string,
 ): Promise<BackendTaskEventDto[]> {
-  const response = await fetchBackend(`${taskPath(homeId, taskId)}/events`, {
+  const response = await fetchBackend(`${taskPath(spaceId, taskId)}/events`, {
     method: "GET",
     apiAccessToken,
   });
@@ -523,7 +523,7 @@ export async function getBackendTaskEvents(
   return z.array(backendTaskEventDtoSchema).parse(raw);
 }
 
-const homeMemberDtoSchema = z.object({
+const spaceMemberDtoSchema = z.object({
   userId: z.string(),
   name: z.string(),
   publicCode: z.string(),
@@ -532,41 +532,41 @@ const homeMemberDtoSchema = z.object({
   joinedAt: z.string(),
 });
 
-export type BackendHomeMemberDto = z.infer<typeof homeMemberDtoSchema>;
+export type BackendSpaceMemberDto = z.infer<typeof spaceMemberDtoSchema>;
 
-export async function getBackendHomeMembers(
+export async function getBackendSpaceMembers(
   apiAccessToken: string,
-  homeId: string,
-): Promise<BackendHomeMemberDto[]> {
-  const response = await fetchBackend(`/homes/${encodeURIComponent(homeId)}/members`, {
+  spaceId: string,
+): Promise<BackendSpaceMemberDto[]> {
+  const response = await fetchBackend(`/spaces/${encodeURIComponent(spaceId)}/members`, {
     method: "GET",
     apiAccessToken,
   });
 
   if (response.status === 401 || response.status === 403) {
-    const err = new Error(`Backend GET /homes/${homeId}/members unauthorized (${response.status}).`);
+    const err = new Error(`Backend GET /spaces/${spaceId}/members unauthorized (${response.status}).`);
     (err as Error & { status: number }).status = response.status;
     throw err;
   }
 
   if (response.status === 404) {
-    const err = new Error("Hogar no encontrado.");
+    const err = new Error("Espacio no encontrado.");
     (err as Error & { status: number }).status = 404;
     throw err;
   }
 
   if (!response.ok) {
     const body = await response.text().catch(() => "");
-    throw new Error(`Backend GET /homes/${homeId}/members failed with ${response.status}. ${body || "No body."}`);
+    throw new Error(`Backend GET /spaces/${spaceId}/members failed with ${response.status}. ${body || "No body."}`);
   }
 
   const raw = await response.json();
-  return z.array(homeMemberDtoSchema).parse(raw);
+  return z.array(spaceMemberDtoSchema).parse(raw);
 }
 
 const invitationStatusSchema = z.enum(["pending", "accepted", "rejected", "cancelled", "expired"]);
 
-const simpleHomeSchema = z.object({
+const simpleSpaceSchema = z.object({
   id: z.string(),
   name: z.string(),
 });
@@ -582,7 +582,7 @@ export const invitationListItemSchema = z.object({
   status: invitationStatusSchema,
   createdAt: z.string(),
   respondedAt: z.string().nullable(),
-  home: simpleHomeSchema,
+  space: simpleSpaceSchema,
   invitedBy: simpleUserSchema.optional(),
   invitedUser: simpleUserSchema.optional(),
 });
@@ -636,7 +636,7 @@ export async function getBackendInvitationsReceived(
 const invitationResponseSchema = z
   .object({
     id: z.string(),
-    homeId: z.string(),
+    spaceId: z.string(),
     invitedByUserId: z.string(),
     invitedUserId: z.string(),
     status: invitationStatusSchema,
@@ -647,10 +647,10 @@ const invitationResponseSchema = z
 
 export async function createBackendInvitation(
   apiAccessToken: string,
-  homeId: string,
+  spaceId: string,
   publicCode: string,
 ): Promise<z.infer<typeof invitationResponseSchema>> {
-  const response = await fetchBackend(`/homes/${encodeURIComponent(homeId)}/invitations`, {
+  const response = await fetchBackend(`/spaces/${encodeURIComponent(spaceId)}/invitations`, {
     method: "POST",
     apiAccessToken,
     body: JSON.stringify({ publicCode: publicCode.trim() }),
