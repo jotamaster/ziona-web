@@ -35,6 +35,7 @@ export const getSpaces = cache(async (): Promise<Space[]> => {
     if (status === 401 || status === 403) {
       redirect(ROUTES.login);
     }
-    throw e;
+    // Sin red o error de servidor: el cliente puede hidratar desde IndexedDB.
+    return [];
   }
 });

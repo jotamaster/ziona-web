@@ -3,8 +3,8 @@
 import { useEffect, useId, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
+import { clientDeleteTask } from "@/lib/offline/task-client";
 import { ROUTES } from "@/lib/routes";
-import { deleteTaskAction } from "@/lib/tasks/actions";
 
 type DeleteTaskDialogProps = {
   spaceId: string;
@@ -46,7 +46,7 @@ export function DeleteTaskDialog({ spaceId, taskId, taskTitle, open, onOpenChang
   const confirm = () => {
     setError(null);
     startTransition(async () => {
-      const result = await deleteTaskAction(spaceId, taskId);
+      const result = await clientDeleteTask(spaceId, taskId);
       if (result.ok) {
         close();
         router.push(ROUTES.app);

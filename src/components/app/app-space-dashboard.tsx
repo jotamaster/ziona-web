@@ -5,6 +5,7 @@ import Link from "next/link";
 import { SpaceMembersStrip } from "@/components/app/space-members-strip";
 import { SpaceTaskStatsRow } from "@/components/app/space-task-stats-row";
 import { useSpaceDashboardData } from "@/components/app/use-space-dashboard-data";
+import { OfflineStatusBanner } from "@/components/offline/offline-status-banner";
 import { useSelectedSpace } from "@/components/spaces/selected-space-context";
 import { SpaceTasksSection } from "@/components/tasks/space-tasks-section";
 import { NeuSurface } from "@/components/ui/neu-surface";
@@ -18,6 +19,11 @@ export function AppSpaceDashboard() {
     <div className="flex flex-col gap-8">
       {selectedSpace && selectedSpaceId ? (
         <div className="flex flex-col gap-5">
+          <OfflineStatusBanner
+            networkOffline={dash.networkOffline}
+            fromCache={dash.fromCache}
+            pendingSyncCount={dash.pendingSyncCount}
+          />
           <SpaceMembersStrip
             members={dash.members}
             loading={dash.membersLoading}
