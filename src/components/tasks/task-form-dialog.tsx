@@ -3,10 +3,7 @@
 import { useEffect, useId, useRef, useState, useTransition } from "react";
 
 import type { BackendSpaceMemberDto, BackendTaskDto } from "@/lib/api/backend-client";
-import {
-  clientCreateTask,
-  clientUpdateTask,
-} from "@/lib/offline/task-client";
+import { createTaskAction, updateTaskAction } from "@/lib/tasks/actions";
 
 import { NeuListbox } from "@/components/ui/neu-listbox";
 
@@ -105,17 +102,13 @@ export function TaskFormDialog({
     startTransition(async () => {
       if (mode === "create") {
         const dueIso = datetimeLocalToIso(dueLocal);
-        const result = await clientCreateTask(
-          spaceId,
-          {
-            title: trimmedTitle,
-            ...(description.trim() ? { description: description.trim() } : {}),
-            priority,
-            ...(dueIso ? { dueDate: dueIso } : {}),
-            ...(assigneeIds.size > 0 ? { assigneeUserIds: [...assigneeIds] } : {}),
-          },
-          members,
-        );
+        const result = await createTaskAction(spaceId, {
+          title: trimmedTitle,
+          ...(description.trim() ? { description: description.trim() } : {}),
+          priority,
+          ...(dueIso ? { dueDate: dueIso } : {}),
+          ...(assigneeIds.size > 0 ? { assigneeUserIds: [...assigneeIds] } : {}),
+        });
         if (result.ok) {
           close();
           onSuccess?.();
@@ -129,18 +122,12 @@ export function TaskFormDialog({
         const descTrim = description.trim();
         const duePatch =
           dueLocal.trim() === "" ? null : (datetimeLocalToIso(dueLocal) ?? null);
-        const result = await clientUpdateTask(
-          spaceId,
-          task.id,
-          {
-            title: trimmedTitle,
-            description: descTrim.length ? descTrim : null,
-            priority,
-            dueDate: duePatch,
-          },
-          task,
-          members,
-        );
+        const result = await updateTaskAction(spaceId, task.id, {
+          title: trimmedTitle,
+          description: descTrim.length ? descTrim : null,
+          priority,
+          dueDate: duePatch,
+        });
         if (result.ok) {
           close();
           onSuccess?.();

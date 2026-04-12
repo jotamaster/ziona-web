@@ -16,7 +16,6 @@ import {
   resolveSelectedSpaceId,
   writeSelectedSpaceIdToStorage,
 } from "@/lib/spaces/resolve-selected-space";
-import { loadCachedSpaces, saveSpacesCache } from "@/lib/offline/snapshots";
 
 type SelectedSpaceContextValue = {
   spaces: Space[];
@@ -35,38 +34,16 @@ type SelectedSpaceProviderProps = {
 };
 
 export function SelectedSpaceProvider({ spaces, children }: SelectedSpaceProviderProps) {
-  const [cachedSpaces, setCachedSpaces] = useState<Space[]>([]);
-
-  const effectiveSpaces = useMemo(
-    () => (spaces.length > 0 ? spaces : cachedSpaces),
-    [spaces, cachedSpaces],
-  );
-
   const [selectedSpaceId, setSelectedSpaceIdState] = useState<string | null>(() =>
-    effectiveSpaces.length === 0 ? null : effectiveSpaces[0]?.id ?? null,
+    spaces.length === 0 ? null : spaces[0]?.id ?? null,
   );
   const [hydrated, setHydrated] = useState(false);
 
-  const spacesKey = useMemo(() => effectiveSpaces.map((s) => s.id).join(","), [effectiveSpaces]);
-
-  useEffect(() => {
-    if (spaces.length > 0) {
-      void saveSpacesCache(spaces);
-      setCachedSpaces([]);
-      return;
-    }
-    let cancelled = false;
-    void loadCachedSpaces().then((c) => {
-      if (!cancelled && c.length > 0) setCachedSpaces(c);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [spaces]);
+  const spacesKey = useMemo(() => spaces.map((s) => s.id).join(","), [spaces]);
 
   useEffect(() => {
     const stored = readSelectedSpaceIdFromStorage();
-    const next = resolveSelectedSpaceId(effectiveSpaces, stored);
+    const next = resolveSelectedSpaceId(spaces, stored);
     setSelectedSpaceIdState(next);
     writeSelectedSpaceIdToStorage(next);
     setHydrated(true);
@@ -75,27 +52,27 @@ export function SelectedSpaceProvider({ spaces, children }: SelectedSpaceProvide
 
   const setSelectedSpaceId = useCallback(
     (id: string) => {
-      if (!effectiveSpaces.some((s) => s.id === id)) return;
+      if (!spaces.some((s) => s.id === id)) return;
       setSelectedSpaceIdState(id);
       writeSelectedSpaceIdToStorage(id);
     },
-    [effectiveSpaces],
+    [spaces],
   );
 
   const selectedSpace = useMemo(() => {
     if (selectedSpaceId == null) return null;
-    return effectiveSpaces.find((s) => s.id === selectedSpaceId) ?? null;
-  }, [effectiveSpaces, selectedSpaceId]);
+    return spaces.find((s) => s.id === selectedSpaceId) ?? null;
+  }, [spaces, selectedSpaceId]);
 
   const value = useMemo(
     () => ({
-      spaces: effectiveSpaces,
+      spaces,
       selectedSpaceId,
       selectedSpace,
       hydrated,
       setSelectedSpaceId,
     }),
-    [effectiveSpaces, selectedSpaceId, selectedSpace, hydrated, setSelectedSpaceId],
+    [spaces, selectedSpaceId, selectedSpace, hydrated, setSelectedSpaceId],
   );
 
   return <SelectedSpaceContext.Provider value={value}>{children}</SelectedSpaceContext.Provider>;

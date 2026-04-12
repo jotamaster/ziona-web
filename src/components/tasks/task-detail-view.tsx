@@ -9,12 +9,7 @@ import type { BackendTaskEventDto } from "@/lib/api/backend-client";
 import { MemberAvatar } from "@/components/ui/member-avatar";
 import { NeuSurface } from "@/components/ui/neu-surface";
 import { ROUTES } from "@/lib/routes";
-import {
-  clientCompleteTask,
-  clientGetTask,
-  clientReopenTask,
-  clientUnassignTask,
-} from "@/lib/offline/task-client";
+import { completeTaskAction, reopenTaskAction, unassignTaskUserAction } from "@/lib/tasks/actions";
 
 import { DeleteTaskDialog } from "./delete-task-dialog";
 import { TaskAssignDialog } from "./task-assign-dialog";
@@ -85,17 +80,10 @@ export function TaskDetailView({ spaceId, initialTask, initialEvents, members }:
     router.refresh();
   };
 
-  const reloadTaskFromStore = async () => {
-    const r = await clientGetTask(spaceId, task.id);
-    if (r.ok) {
-      setTask(r.data);
-    }
-  };
-
   const onComplete = () => {
     setActionError(null);
     startTransition(async () => {
-      const result = await clientCompleteTask(spaceId, task.id, task, members);
+      const result = await completeTaskAction(spaceId, task.id);
       if (result.ok) {
         setTask(result.data);
         refresh();
@@ -108,7 +96,7 @@ export function TaskDetailView({ spaceId, initialTask, initialEvents, members }:
   const onReopen = () => {
     setActionError(null);
     startTransition(async () => {
-      const result = await clientReopenTask(spaceId, task.id, task, members);
+      const result = await reopenTaskAction(spaceId, task.id);
       if (result.ok) {
         setTask(result.data);
         refresh();
@@ -121,7 +109,7 @@ export function TaskDetailView({ spaceId, initialTask, initialEvents, members }:
   const onUnassign = (userId: string) => {
     setActionError(null);
     startTransition(async () => {
-      const result = await clientUnassignTask(spaceId, task.id, userId, task, members);
+      const result = await unassignTaskUserAction(spaceId, task.id, userId);
       if (result.ok) {
         setTask(result.data);
         refresh();
@@ -287,8 +275,7 @@ export function TaskDetailView({ spaceId, initialTask, initialEvents, members }:
         mode="edit"
         task={task}
         members={members}
-        onSuccess={async () => {
-          await reloadTaskFromStore();
+        onSuccess={() => {
           refresh();
         }}
       />
@@ -307,7 +294,6 @@ export function TaskDetailView({ spaceId, initialTask, initialEvents, members }:
         members={members}
         open={assignOpen}
         onOpenChange={setAssignOpen}
-        onAssigned={reloadTaskFromStore}
       />
     </div>
   );

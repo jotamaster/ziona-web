@@ -3,10 +3,8 @@
 import { useCallback, useEffect, useState, useTransition } from "react";
 
 import type { BackendSpaceMemberDto, BackendTaskDto } from "@/lib/api/backend-client";
-import {
-  getOutboxPendingCount,
-  loadDashboardDataForSpace,
-} from "@/lib/offline/task-client";
+import { listSpaceMembersAction } from "@/lib/spaces/actions";
+import { listTasksForSpaceAction } from "@/lib/tasks/actions";
 
 export type SpaceDashboardData = {
   members: BackendSpaceMemberDto[] | null;
@@ -16,12 +14,6 @@ export type SpaceDashboardData = {
   tasksError: string | null;
   tasksLoading: boolean;
   refetch: () => void;
-  /** True si al menos parte de los datos salió de IndexedDB */
-  fromCache: boolean;
-  /** Mutaciones de tareas pendientes de sincronizar */
-  pendingSyncCount: number;
-  /** `navigator.onLine === false` */
-  networkOffline: boolean;
 };
 
 export function useSpaceDashboardData(selectedSpaceId: string | null): SpaceDashboardData {
@@ -29,21 +21,7 @@ export function useSpaceDashboardData(selectedSpaceId: string | null): SpaceDash
   const [membersError, setMembersError] = useState<string | null>(null);
   const [tasks, setTasks] = useState<BackendTaskDto[] | null>(null);
   const [tasksError, setTasksError] = useState<string | null>(null);
-  const [fromCache, setFromCache] = useState(false);
-  const [pendingSyncCount, setPendingSyncCount] = useState(0);
-  const [networkOffline, setNetworkOffline] = useState(false);
   const [pending, startTransition] = useTransition();
-
-  useEffect(() => {
-    const sync = () => setNetworkOffline(typeof navigator !== "undefined" && !navigator.onLine);
-    sync();
-    window.addEventListener("online", sync);
-    window.addEventListener("offline", sync);
-    return () => {
-      window.removeEventListener("online", sync);
-      window.removeEventListener("offline", sync);
-    };
-  }, []);
 
   const load = useCallback(() => {
     if (selectedSpaceId == null) {
@@ -51,16 +29,29 @@ export function useSpaceDashboardData(selectedSpaceId: string | null): SpaceDash
     }
 
     setMembersError(null);
+    setMembers(null);
     setTasksError(null);
+    setTasks(null);
 
     startTransition(async () => {
-      const result = await loadDashboardDataForSpace(selectedSpaceId);
-      setMembers(result.members);
-      setMembersError(result.membersError);
-      setTasks(result.tasks);
-      setTasksError(result.tasksError);
-      setFromCache(result.fromCache);
-      setPendingSyncCount(await getOutboxPendingCount());
+      const [membersResult, tasksResult] = await Promise.all([
+        listSpaceMembersAction(selectedSpaceId),
+        listTasksForSpaceAction(selectedSpaceId),
+      ]);
+
+      if (membersResult.ok) {
+        setMembers(membersResult.members);
+      } else {
+        setMembersError(membersResult.message);
+        setMembers(null);
+      }
+
+      if (tasksResult.ok) {
+        setTasks(tasksResult.tasks);
+      } else {
+        setTasksError(tasksResult.message);
+        setTasks(null);
+      }
     });
   }, [selectedSpaceId]);
 
@@ -70,33 +61,10 @@ export function useSpaceDashboardData(selectedSpaceId: string | null): SpaceDash
       setMembersError(null);
       setTasks(null);
       setTasksError(null);
-      setFromCache(false);
-      setPendingSyncCount(0);
       return;
     }
-    setMembers(null);
-    setTasks(null);
-    setMembersError(null);
-    setTasksError(null);
     load();
   }, [selectedSpaceId, load]);
-
-  useEffect(() => {
-    const onSync = () => {
-      if (selectedSpaceId == null) return;
-      startTransition(async () => {
-        const result = await loadDashboardDataForSpace(selectedSpaceId);
-        setMembers(result.members);
-        setMembersError(result.membersError);
-        setTasks(result.tasks);
-        setTasksError(result.tasksError);
-        setFromCache(result.fromCache);
-        setPendingSyncCount(await getOutboxPendingCount());
-      });
-    };
-    window.addEventListener("ziona-offline-sync", onSync);
-    return () => window.removeEventListener("ziona-offline-sync", onSync);
-  }, [selectedSpaceId]);
 
   const refetch = useCallback(() => {
     load();
@@ -113,8 +81,5 @@ export function useSpaceDashboardData(selectedSpaceId: string | null): SpaceDash
     tasksError,
     tasksLoading,
     refetch,
-    fromCache,
-    pendingSyncCount,
-    networkOffline,
   };
 }

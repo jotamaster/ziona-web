@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 import type { BackendSpaceMemberDto } from "@/lib/api/backend-client";
 import type { BackendTaskDto } from "@/lib/api/backend-client";
-import { clientAssignTask } from "@/lib/offline/task-client";
+import { assignTaskUsersAction } from "@/lib/tasks/actions";
 
 type TaskAssignDialogProps = {
   spaceId: string;
@@ -13,18 +13,9 @@ type TaskAssignDialogProps = {
   members: BackendSpaceMemberDto[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Tras asignar correctamente (p. ej. recargar tarea en el padre). */
-  onAssigned?: () => void;
 };
 
-export function TaskAssignDialog({
-  spaceId,
-  task,
-  members,
-  open,
-  onOpenChange,
-  onAssigned,
-}: TaskAssignDialogProps) {
+export function TaskAssignDialog({ spaceId, task, members, open, onOpenChange }: TaskAssignDialogProps) {
   const router = useRouter();
   const titleId = useId();
   const [pending, startTransition] = useTransition();
@@ -73,10 +64,9 @@ export function TaskAssignDialog({
     }
     setError(null);
     startTransition(async () => {
-      const result = await clientAssignTask(spaceId, task.id, [...selected], task, members);
+      const result = await assignTaskUsersAction(spaceId, task.id, [...selected]);
       if (result.ok) {
         close();
-        onAssigned?.();
         router.refresh();
         return;
       }
