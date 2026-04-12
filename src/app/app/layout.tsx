@@ -4,12 +4,16 @@ import { redirect } from "next/navigation";
 import { SelectedSpaceProvider } from "@/components/spaces/selected-space-context";
 import { AuthenticatedShell } from "@/components/shell/authenticated-shell";
 import { authOptions } from "@/lib/auth/auth-options";
+import { getApiAccessTokenFromCookies } from "@/lib/auth/get-api-access-token";
 import { getSpaces } from "@/lib/spaces/get-spaces";
 import { ROUTES } from "@/lib/routes";
 
 export default async function AppSectionLayout({ children }: { children: React.ReactNode }) {
-  const session = await getServerSession(authOptions);
-  if (!session) {
+  const [session, apiAccessToken] = await Promise.all([
+    getServerSession(authOptions),
+    getApiAccessTokenFromCookies(),
+  ]);
+  if (!session || !apiAccessToken) {
     redirect(ROUTES.login);
   }
 
